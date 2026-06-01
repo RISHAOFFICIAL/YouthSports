@@ -11,7 +11,6 @@ interface Props {
 
 export default function CoachSettingsModal({ settings, onSave, onClose }: Props) {
   const [form, setForm] = useState<CoachSettings>({ ...settings });
-  const [tab, setTab] = useState<"details" | "logo">("details");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -34,82 +33,78 @@ export default function CoachSettingsModal({ settings, onSave, onClose }: Props)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">Coach Settings</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">✕</button>
+      <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-lg font-extrabold uppercase tracking-tight text-white">
+            Coach Settings
+          </h2>
+          <button onClick={onClose} className="text-slate-500 transition-colors hover:text-amber-400">✕</button>
         </div>
 
-        {/* Tabs */}
-        <div className="mb-4 flex gap-2">
-          <button onClick={() => setTab("details")}
-            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${tab === "details" ? "bg-amber-600 text-white" : "bg-slate-800 text-slate-300"}`}>
-            Details
-          </button>
-          <button onClick={() => setTab("logo")}
-            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${tab === "logo" ? "bg-amber-600 text-white" : "bg-slate-800 text-slate-300"}`}>
-            Logo
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {tab === "details" && (
-            <>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-400">Organization Name</label>
-                <input name="orgName" value={form.orgName} onChange={handleChange} placeholder="e.g. Eastside Eagles"
-                  className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-amber-500 focus:outline-none" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-400">Team Name</label>
-                <input name="teamName" value={form.teamName} onChange={handleChange} placeholder="e.g. 12U Travel"
-                  className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-amber-500 focus:outline-none" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-400">Coach Name</label>
-                  <input name="coachName" value={form.coachName} onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-amber-500 focus:outline-none" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-400">Coach Phone</label>
-                  <input name="coachPhone" value={form.coachPhone} onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-amber-500 focus:outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-400">Coach Email</label>
-                <input name="coachEmail" type="email" value={form.coachEmail} onChange={handleChange}
-                  className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-amber-500 focus:outline-none" />
-              </div>
-            </>
-          )}
-
-          {tab === "logo" && (
-            <div className="space-y-4 text-center">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Logo Upload */}
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Team Logo</label>
+            <div className="rounded-lg border-2 border-dashed border-slate-700 p-6 text-center transition-colors hover:border-amber-400/50">
               {form.logoDataUrl ? (
                 <div className="flex flex-col items-center gap-3">
-                  <img src={form.logoDataUrl} alt="Logo preview" className="h-24 w-24 rounded-xl border border-slate-600 object-contain" />
+                  <img src={form.logoDataUrl} alt="Logo" className="h-20 w-20 rounded-lg border border-slate-700 object-contain" />
                   <button type="button" onClick={() => setForm((prev) => ({ ...prev, logoDataUrl: "" }))}
-                    className="text-xs text-red-400 hover:text-red-300">Remove logo</button>
+                    className="rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-red-400 transition-colors hover:bg-red-900/30">
+                    Remove
+                  </button>
                 </div>
               ) : (
-                <div className="rounded-xl border-2 border-dashed border-slate-600 p-8">
-                  <p className="text-sm text-slate-400">Upload your organization logo</p>
+                <>
+                  <p className="mb-2 text-xs font-medium text-slate-500">Drop your logo here or click to upload</p>
                   <input type="file" accept="image/*" onChange={handleLogoUpload}
-                    className="mt-3 text-sm text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-amber-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-amber-500" />
-                </div>
+                    className="text-xs text-slate-400 file:mr-3 file:rounded-md file:border-0 file:bg-red-700 file:px-4 file:py-2 file:text-xs file:font-bold file:text-white file:transition-colors hover:file:bg-red-600" />
+                </>
               )}
             </div>
-          )}
+          </div>
 
+          {/* Organization */}
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Organization Name</label>
+            <input name="orgName" value={form.orgName} onChange={handleChange} placeholder="e.g. Eastside Eagles"
+              className="w-full rounded-md border border-slate-800 bg-slate-950 p-4 text-white transition-colors placeholder:text-slate-600 focus:border-red-700 focus:outline-none" />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Team Name</label>
+            <input name="teamName" value={form.teamName} onChange={handleChange} placeholder="e.g. 12U Travel"
+              className="w-full rounded-md border border-slate-800 bg-slate-950 p-4 text-white transition-colors placeholder:text-slate-600 focus:border-red-700 focus:outline-none" />
+          </div>
+
+          {/* Coach Info */}
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Coach Name</label>
+            <input name="coachName" value={form.coachName} onChange={handleChange}
+              className="w-full rounded-md border border-slate-800 bg-slate-950 p-4 text-white transition-colors placeholder:text-slate-600 focus:border-red-700 focus:outline-none" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Email</label>
+              <input name="coachEmail" type="email" value={form.coachEmail} onChange={handleChange}
+                className="w-full rounded-md border border-slate-800 bg-slate-950 p-4 text-white transition-colors placeholder:text-slate-600 focus:border-red-700 focus:outline-none" />
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Phone</label>
+              <input name="coachPhone" value={form.coachPhone} onChange={handleChange}
+                className="w-full rounded-md border border-slate-800 bg-slate-950 p-4 text-white transition-colors placeholder:text-slate-600 focus:border-red-700 focus:outline-none" />
+            </div>
+          </div>
+
+          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button type="submit"
-              className="flex-1 rounded-xl bg-amber-600 py-2.5 font-bold text-white transition hover:bg-amber-500">
-              Save Settings
+              className="flex-1 rounded-md bg-red-700 py-4 font-black uppercase tracking-widest text-white shadow-lg shadow-red-900/20 transition-all hover:bg-red-600">
+              Save
             </button>
             <button type="button" onClick={onClose}
-              className="rounded-xl bg-slate-800 px-5 py-2.5 font-medium text-slate-300 transition hover:bg-slate-700">
+              className="rounded-md border-2 border-slate-700 px-6 py-4 font-bold uppercase tracking-wider text-slate-400 transition-colors hover:border-amber-400 hover:text-amber-400">
               Cancel
             </button>
           </div>

@@ -1,178 +1,261 @@
 import { jsPDF } from "jspdf";
 import { PlayerData, CoachSettings } from "./types";
 
-export function generateRegistrationPDF(players: PlayerData[], settings: CoachSettings) {
+export function generateRegistrationPDF(players: PlayerData[], settings: CoachSettings, filename?: string) {
   const doc = new jsPDF("p", "mm", "a4");
   const pageW = 210;
-  const margin = 15;
-  const contentW = pageW - margin * 2;
-  let y = margin;
+  const pageH = 297;
+  const marginX = 15;
+  const marginY = 15;
+  let y = marginY;
 
-  // ---- Helper ----
-  const addSection = (title: string, items: { label: string; value: string }[]) => {
-    if (y > 250) {
-      doc.addPage();
-      y = margin;
-    }
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(245, 158, 11); // amber-500
-    doc.text(title, margin, y);
-    y += 6;
+  // Colors
+  const gold = [251, 191, 36] as const;       // amber-400
+  const red = [185, 28, 28] as const;          // red-700
+  const dark = [15, 23, 42] as const;          // slate-900
+  const slate600: [number, number, number] = [71, 85, 105];
+  const slate400: [number, number, number] = [148, 163, 184];
+  const gray400: [number, number, number] = [156, 163, 175];
+  const gray800: [number, number, number] = [31, 41, 55];
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(55, 65, 81); // slate-700
+  // ---- Draw Gold Border ----
+  const border = 6; // mm inset
+  doc.setDrawColor(gold[0], gold[1], gold[2]);
+  doc.setLineWidth(0.8);
+  doc.rect(marginX - 2, marginY - 2, pageW - marginX * 2 + 4, pageH - marginY * 2 + 4);
+  // Inner gold border
+  doc.setLineWidth(0.3);
+  doc.rect(marginX + border, marginY + border, pageW - (marginX + border) * 2, pageH - (marginY + border) * 2);
 
-    items.forEach((item) => {
-      const line = `${item.label}: ${item.value || "—"}`;
-      if (y > 275) {
-        doc.addPage();
-        y = margin;
-      }
-      doc.text(line, margin + 2, y);
-      y += 5;
-    });
-    y += 3;
-  };
+  // ---- Watermark (faint text using light gray) ----
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(60);
+  doc.setTextColor(230, 230, 230);
+  doc.text("DIAMOND", pageW / 2, pageH / 2, { align: "center", angle: -45 });
+
+  y = marginY + border + 12;
 
   // ---- Header ----
-  // Logo (if present) – small, top-left
-  if (settings.logoDataUrl) {
-    try {
-      doc.addImage(settings.logoDataUrl, "PNG", margin, y, 20, 20);
-    } catch {
-      // ignore if image fails
-    }
-  }
+  // Left: Logo + DiamondForms text
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bolditalic");
+  doc.setTextColor(dark[0], dark[1], dark[2]);
+  doc.text("DIAMOND", marginX + border + 4, y);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bolditalic");
+  doc.setTextColor(gold[0], gold[1], gold[2]);
+  doc.text("FORMS", marginX + border + 4 + doc.getTextWidth("DIAMOND ") + 1, y);
 
-  // Organization name centered
+  doc.setFontSize(7);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.setTextColor(15, 23, 42); // slate-950
-  const orgName = settings.orgName || "Youth Sports Registration";
-  const orgX = pageW / 2;
-  doc.text(orgName, orgX, y + 10, { align: "center" });
+  doc.setTextColor(gray400[0], gray400[1], gray400[2]);
+  doc.text("REGISTRATION RECEIPT", marginX + border + 4, y + 5);
 
-  y += 16;
+  // Right: PAID badge
+  const paidX = pageW - marginX - border - 4;
+  doc.setFontSize(22);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(red[0], red[1], red[2]);
+  doc.text("PAID", paidX, y, { align: "right" });
 
-  // Divider line
-  doc.setDrawColor(245, 158, 11);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageW - margin, y);
-  y += 6;
+  doc.setFontSize(6);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(gray400[0], gray400[1], gray400[2]);
+  doc.text(`#DF-${String(Date.now()).slice(-6)}`, paidX, y + 5, { align: "right" });
 
-  // Coach info row
+  y += 18;
+
+  // ---- Divider ----
+  doc.setDrawColor(200, 200, 210);
+  doc.setLineWidth(0.3);
+  doc.line(marginX + border + 4, y, pageW - marginX - border - 4, y);
+  y += 8;
+
+  // ---- Team / Org Info Row ----
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(100, 116, 139);
-  const coachLine = [
+  doc.setTextColor(slate600[0], slate600[1], slate600[2]);
+
+  const orgLine = [
+    settings.orgName && `Organization: ${settings.orgName}`,
+    settings.teamName && `Team: ${settings.teamName}`,
     settings.coachName && `Coach: ${settings.coachName}`,
     settings.coachEmail,
-    settings.coachPhone && `Tel: ${settings.coachPhone}`,
-    settings.teamName && `Team: ${settings.teamName}`,
-  ]
-    .filter(Boolean)
-    .join("  |  ");
-  doc.text(coachLine, margin, y);
-  y += 6;
+  ].filter(Boolean).join("  |  ");
+  doc.text(orgLine, marginX + border + 4, y);
+  y += 10;
 
-  // ---- Players Table ----
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(245, 158, 11);
-  doc.text("Registered Players", margin, y);
-  y += 7;
-
-  // Table header
-  doc.setFillColor(15, 23, 42);
-  doc.setTextColor(255, 255, 255);
+  // ---- Player Roster ----
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
+  doc.setTextColor(gray400[0], gray400[1], gray400[2]);
+  doc.text("PLAYER ROSTER", marginX + border + 4, y);
+  y += 5;
 
-  const cols = [
-    { label: "#", x: margin, w: 8 },
-    { label: "First Name", x: margin + 8, w: 30 },
-    { label: "Last Name", x: margin + 38, w: 30 },
-    { label: "Age", x: margin + 68, w: 10 },
-    { label: "Pos", x: margin + 78, w: 22 },
-    { label: "Jersey", x: margin + 100, w: 14 },
-    { label: "Parent", x: margin + 114, w: 30 },
-    { label: "Phone", x: margin + 144, w: 25 },
-    { label: "Medical", x: margin + 169, w: 26 },
+  // Table header
+  const colDefs = [
+    { label: "#", x: marginX + border + 4, w: 6 },
+    { label: "NAME", x: marginX + border + 10, w: 40 },
+    { label: "AGE", x: marginX + border + 50, w: 10 },
+    { label: "POSITION", x: marginX + border + 60, w: 28 },
+    { label: "JERSEY", x: marginX + border + 88, w: 14 },
+    { label: "PARENT", x: marginX + border + 102, w: 32 },
+    { label: "PHONE", x: marginX + border + 134, w: 28 },
+    { label: "MEDICAL", x: marginX + border + 162, w: 26 },
   ];
 
-  // Draw header background
-  doc.rect(margin, y - 2, contentW, 6, "F");
+  // Header background
+  doc.setFillColor(dark[0], dark[1], dark[2]);
+  doc.rect(marginX + border + 2, y - 2, pageW - (marginX + border) * 2 - 4, 5, "F");
 
-  cols.forEach((c) => {
-    doc.text(c.label, c.x, y + 1);
-  });
+  doc.setFontSize(6);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(255, 255, 255);
+  colDefs.forEach((c) => doc.text(c.label, c.x, y + 1));
+  y += 6;
 
-  y += 7;
-
-  // Table rows
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(55, 65, 81);
+  doc.setFontSize(6);
 
   players.forEach((p, i) => {
-    if (y > 275) {
+    if (y > 265) {
       doc.addPage();
-      y = margin;
-      // Re-draw header on new page
-      doc.setFillColor(15, 23, 42);
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
+      y = marginY + border + 12;
+      // Re-draw gold border on new page
+      doc.setDrawColor(gold[0], gold[1], gold[2]);
+      doc.setLineWidth(0.8);
+      doc.rect(marginX - 2, marginY - 2, pageW - marginX * 2 + 4, pageH - marginY * 2 + 4);
+      doc.setLineWidth(0.3);
+      doc.rect(marginX + border, marginY + border, pageW - (marginX + border) * 2, pageH - (marginY + border) * 2);
+
+      doc.setFillColor(dark[0], dark[1], dark[2]);
+      doc.rect(marginX + border + 2, y - 2, pageW - (marginX + border) * 2 - 4, 5, "F");
       doc.setFont("helvetica", "bold");
-      doc.rect(margin, y - 2, contentW, 6, "F");
-      cols.forEach((c) => doc.text(c.label, c.x, y + 1));
-      y += 7;
+      doc.setTextColor(255, 255, 255);
+      colDefs.forEach((c) => doc.text(c.label, c.x, y + 1));
+      y += 6;
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(55, 65, 81);
     }
 
     const rowColor = i % 2 === 0 ? [248, 250, 252] : [241, 245, 249];
     doc.setFillColor(rowColor[0], rowColor[1], rowColor[2]);
-    doc.rect(margin, y - 2, contentW, 5.5, "F");
+    doc.rect(marginX + border + 2, y - 2, pageW - (marginX + border) * 2 - 4, 5, "F");
 
-    const row: Record<string, string> = {
-      idx: String(i + 1),
-      firstName: p.firstName,
-      lastName: p.lastName,
-      age: p.age,
-      pos: p.position,
-      jersey: p.jerseyNumber || "",
-      parent: p.parentName || "",
-      phone: p.parentPhone || "",
-      medical: p.medicalNotes || "",
-    };
-
-    cols.forEach((c) => {
-      const key = c.label.toLowerCase().replace(/\s+/g, "");
-      doc.text(row[key] || "", c.x, y + 1);
-    });
-
-    y += 6;
+    doc.setTextColor(gray800[0], gray800[1], gray800[2]);
+    const vals = [String(i + 1), `${p.firstName} ${p.lastName}`, p.age, p.position, p.jerseyNumber || "—", p.parentName || "—", p.parentPhone || "—", p.medicalNotes || ""];
+    colDefs.forEach((c, idx) => doc.text(vals[idx] || "", c.x, y + 1));
+    y += 5.5;
   });
 
-  // ---- Footer ----
-  y = Math.max(y + 8, 270);
-  doc.setDrawColor(200, 200, 210);
-  doc.setLineWidth(0.3);
-  doc.line(margin, y, pageW - margin, y);
-  y += 4;
+  y += 6;
+
+  // ---- Signature Lines ----
+  if (y > 250) { doc.addPage(); y = marginY + border + 12; }
+
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.5);
+
+  // Coach Signature
+  doc.line(marginX + border + 4, y, marginX + border + 70, y);
+  doc.setFontSize(6);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(gray400[0], gray400[1], gray400[2]);
+  doc.text("COACH SIGNATURE", marginX + border + 4, y + 4);
+
+  // Parent Signature
+  doc.line(pageW - marginX - border - 70, y, pageW - marginX - border - 4, y);
+  doc.text("PARENT/GUARDIAN SIGNATURE", pageW - marginX - border - 4, y + 4, { align: "right" });
+
+  y += 16;
+
+  // ---- Payment Summary (Bento-style) ----
+  if (y > 260) { doc.addPage(); y = marginY + border + 12; }
+
+  doc.setFillColor(249, 250, 251);
+  doc.rect(marginX + border + 4, y, pageW - (marginX + border) * 2 - 8, 28, "F");
 
   doc.setFontSize(7);
-  doc.setFont("helvetica", "italic");
-  doc.setTextColor(148, 163, 184);
-  doc.text(`Generated by DiamondForms · ${new Date().toLocaleDateString()}`, margin, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(gray400[0], gray400[1], gray400[2]);
+  doc.text("PAYMENT SUMMARY", marginX + border + 10, y + 5);
 
-  // "FREE" watermark
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(slate600[0], slate600[1], slate600[2]);
+  doc.text(`Registration Fee (${players.length} player${players.length !== 1 ? "s" : ""})`, marginX + border + 10, y + 13);
+
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(red[0], red[1], red[2]);
+  // Right-align "PAID" status
+  doc.text("PAID", pageW - marginX - border - 10, y + 13, { align: "right" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(slate600[0], slate600[1], slate600[2]);
+  doc.text(`Processing Fee`, marginX + border + 10, y + 20);
+
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(slate600[0], slate600[1], slate600[2]);
+  doc.text("$0.00", pageW - marginX - border - 10, y + 20, { align: "right" });
+
+  y += 34;
+
+  // ---- Program Includes (3-grid) ----
+  if (y > 265) { doc.addPage(); y = marginY + border + 12; }
+
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(gray400[0], gray400[1], gray400[2]);
+  doc.text("PROGRAM INCLUDES", marginX + border + 4, y);
+  y += 5;
+
+  const includes = ["Full Uniform", "Insurance", "Season Games"];
+  const boxW = 36;
+  const boxGap = 6;
+  includes.forEach((item, idx) => {
+    const bx = marginX + border + 4 + idx * (boxW + boxGap);
+    doc.setDrawColor(200, 200, 210);
+    doc.setLineWidth(0.3);
+    doc.rect(bx, y, boxW, 10);
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(gray400[0], gray400[1], gray400[2]);
+    doc.text(item, bx + boxW / 2, y + 6, { align: "center" });
+  });
+
+  y += 18;
+
+  // ---- Footer / Waiver ----
+  if (y > 270) { doc.addPage(); y = marginY + border + 12; }
+
+  doc.setDrawColor(200, 200, 210);
+  doc.setLineWidth(0.3);
+  doc.setLineDashPattern([2, 2], 0);
+  doc.line(marginX + border + 4, y, pageW - marginX - border - 4, y);
+  doc.setLineDashPattern([], 0);
+  y += 4;
+
   doc.setFontSize(6);
-  doc.setTextColor(203, 213, 225);
-  doc.text("Free tier — DiamondForms branding", pageW - margin, y, { align: "right" });
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(gray400[0], gray400[1], gray400[2]);
+  doc.text(
+    "This document serves as an official registration receipt. Processed via DiamondForms. For support, contact your team administrator or email support@diamondforms.com.",
+    marginX + border + 4,
+    y,
+    { maxWidth: pageW - (marginX + border) * 2 - 8 }
+  );
+
+  // ---- Free-tier branding ----
+  y = pageH - marginY - border - 6;
+  doc.setFontSize(5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(slate400[0], slate400[1], slate400[2]);
+  doc.text("DiamondForms · Free Tier", pageW - marginX - border - 4, y, { align: "right" });
+
+  // Date
+  doc.setFont("helvetica", "normal");
+  doc.text(`Generated ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`, marginX + border + 4, y);
 
   // Save
-  const filename = `registration_${settings.orgName?.replace(/\s+/g, "_") || "team"}_${Date.now()}.pdf`;
-  doc.save(filename);
+  const fn = filename || `registration_${settings.orgName?.replace(/\s+/g, "_") || "team"}_${Date.now()}.pdf`;
+  doc.save(fn);
 }

@@ -45,33 +45,59 @@ export default function Home() {
   };
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-6">
-      {/* Header */}
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">
-            ⚾ DiamondForms
+    <main className="mx-auto max-w-md px-4 pb-28">
+      {/* Header — Diamond Logo + Menu */}
+      <header className="flex items-center justify-between border-b border-slate-800 py-5">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 rotate-45 items-center justify-center rounded-sm bg-amber-400">
+            <div className="h-4 w-4 rounded-full bg-slate-950"></div>
+          </div>
+          <h1 className="text-xl font-extrabold uppercase italic tracking-tighter">
+            Diamond<span className="text-amber-400">Forms</span>
           </h1>
-          <p className="text-sm text-slate-400">Youth Sports Registration</p>
         </div>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
-        >
-          ⚙️ Settings
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Coach badge */}
+          {settings.orgName && (
+            <span className="hidden rounded-full bg-slate-800 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-400 sm:inline-block">
+              {settings.orgName}
+            </span>
+          )}
+          <button
+            onClick={() => setShowSettings(true)}
+            className="rounded-md border border-slate-700 px-3 py-2 text-sm font-bold uppercase tracking-wider text-slate-400 transition-colors hover:border-amber-400 hover:text-amber-400"
+          >
+            ⚙️ Settings
+          </button>
+        </div>
       </header>
 
       {/* Coach Info Banner */}
       {settings.orgName && (
-        <div className="mb-4 rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-center">
-          <p className="text-lg font-bold text-amber-400">{settings.orgName}</p>
-          {settings.teamName && (
-            <p className="text-sm text-slate-300">{settings.teamName}</p>
-          )}
-          <p className="mt-1 text-xs text-slate-400">
-            {settings.coachName} · {settings.coachEmail}
-          </p>
+        <div className="mb-6 mt-5 rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl">
+          <div className="flex items-center gap-3">
+            {settings.logoDataUrl && (
+              <img src={settings.logoDataUrl} alt="Logo" className="h-12 w-12 rounded-lg border border-slate-700 object-contain" />
+            )}
+            <div>
+              <p className="text-lg font-extrabold uppercase tracking-tight text-amber-400">{settings.orgName}</p>
+              {settings.teamName && <p className="text-sm font-medium text-slate-400">{settings.teamName}</p>}
+              <p className="mt-0.5 text-[11px] text-slate-500">{settings.coachName && `Coach ${settings.coachName}`}{settings.coachEmail && ` · ${settings.coachEmail}`}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Progress — if players exist */}
+      {players.length > 0 && (
+        <div className="mb-6">
+          <div className="mb-1 flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            <span>Registration</span>
+            <span>{players.length} player{players.length !== 1 ? "s" : ""}</span>
+          </div>
+          <div className="h-1 w-full overflow-hidden rounded-full bg-slate-800">
+            <div className="h-full w-full bg-red-700" style={{ width: `${Math.min(players.length * 25, 100)}%` }}></div>
+          </div>
         </div>
       )}
 
@@ -81,27 +107,26 @@ export default function Home() {
       {/* Player List */}
       {players.length > 0 && (
         <section className="mt-6">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-slate-400">
-            Registered Players ({players.length})
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">
+            Roster
           </h2>
           <ul className="space-y-2">
             {players.map((p, i) => (
               <li
                 key={i}
-                className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900/40 px-4 py-3"
+                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl"
               >
                 <div>
-                  <p className="font-medium text-white">
+                  <p className="font-bold text-white">
                     {p.firstName} {p.lastName}
                   </p>
-                  <p className="text-xs text-slate-400">
-                    {p.age} yrs · {p.jerseyNumber && `#${p.jerseyNumber} · `}
-                    {p.position}
+                  <p className="text-xs font-medium text-slate-400">
+                    {p.age} yrs · {p.position}{p.jerseyNumber && ` · #${p.jerseyNumber}`}
                   </p>
                 </div>
                 <button
                   onClick={() => removePlayer(i)}
-                  className="rounded-md bg-red-900/40 px-2 py-1 text-xs text-red-300 transition hover:bg-red-800/60"
+                  className="rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-red-400 transition-colors hover:bg-red-900/30"
                 >
                   Remove
                 </button>
@@ -111,7 +136,7 @@ export default function Home() {
 
           <button
             onClick={() => setShowPreview(true)}
-            className="mt-4 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-3 font-bold text-white shadow-lg transition hover:from-amber-400 hover:to-orange-500"
+            className="mt-4 w-full bg-red-700 py-4 font-black uppercase tracking-widest text-white shadow-lg shadow-red-900/20 transition-all hover:bg-red-600 rounded-md"
           >
             📄 Generate Registration PDF
           </button>
@@ -120,16 +145,30 @@ export default function Home() {
 
       {/* Empty State */}
       {players.length === 0 && !showPreview && (
-        <div className="mt-12 text-center">
-          <div className="text-5xl">📋</div>
-          <p className="mt-4 text-slate-400">
-            Add players above to generate your registration form.
+        <div className="mt-16 text-center">
+          <div className="mx-auto mb-4 flex h-20 w-20 rotate-45 items-center justify-center rounded-lg bg-amber-400/10">
+            <div className="h-10 w-10 rounded-full bg-slate-950"></div>
+          </div>
+          <p className="text-lg font-extrabold uppercase tracking-tight text-slate-300">
+            No Players Yet
           </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Use Settings to add your organization logo and coach info.
+          <p className="mt-2 text-sm text-slate-500">
+            Add your first player above to generate a registration form.
+          </p>
+          <p className="mt-1 text-xs text-slate-600">
+            Use Settings to add your team logo and coach info.
           </p>
         </div>
       )}
+
+      {/* Sticky footer for mobile */}
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/80 p-4 backdrop-blur-md">
+        <div className="mx-auto max-w-md">
+          <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-600">
+            DiamondForms · Free Tier
+          </p>
+        </div>
+      </footer>
 
       {/* Modals */}
       {showSettings && (
