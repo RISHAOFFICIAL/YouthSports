@@ -4,7 +4,10 @@ export interface CoachSettings {
   coachEmail: string;
   coachPhone: string;
   teamName: string;
+  programName: string;
+  programYear: string;
   logoDataUrl: string;
+  primaryColor: string;
 }
 
 export interface PlayerData {

@@ -16,6 +16,9 @@ export default function GeneratedPreview({ players, settings, onClose }: Props) 
     generateRegistrationPDF(players, settings, filename);
   }, [players, settings]);
 
+  const primary = settings.primaryColor || "#b91c1c";
+  const primaryGlow = { boxShadow: `0 10px 15px -3px ${primary}33`, backgroundColor: primary };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
@@ -34,9 +37,7 @@ export default function GeneratedPreview({ players, settings, onClose }: Props) 
 
         {/* Preview Card */}
         <div className="mb-4 rounded-lg border border-slate-700 bg-white p-6 shadow-sm">
-          {/* Simulated Gold Border */}
           <div className="border-2 border-amber-400 p-4">
-            {/* Receipt Header */}
             <div className="mb-6 flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-1.5">
@@ -48,12 +49,11 @@ export default function GeneratedPreview({ players, settings, onClose }: Props) 
                 <p className="mt-1 text-[8px] font-bold uppercase tracking-widest text-gray-400">Registration Receipt</p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-black uppercase text-red-700 leading-none">Paid</p>
+                <p className="text-sm font-black uppercase leading-none" style={{ color: primary }}>Paid</p>
                 <p className="text-[8px] font-bold text-gray-400">#DF-{String(Date.now()).slice(-6)}</p>
               </div>
             </div>
 
-            {/* Player Info */}
             <div className="mb-6 grid grid-cols-2 gap-6">
               <div>
                 <p className="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-2 border-b pb-1">Player Roster</p>
@@ -65,7 +65,7 @@ export default function GeneratedPreview({ players, settings, onClose }: Props) 
                     </div>
                   ))}
                   {players.length > 3 && (
-                    <p className="text-[8px] font-bold text-amber-600">+{players.length - 3} more players</p>
+                    <p className="text-[8px] font-bold" style={{ color: primary }}>+{players.length - 3} more players</p>
                   )}
                 </div>
               </div>
@@ -73,26 +73,30 @@ export default function GeneratedPreview({ players, settings, onClose }: Props) 
                 <p className="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-2 border-b pb-1">Organization</p>
                 <p className="text-xs font-bold text-gray-800">{settings.orgName || "—"}</p>
                 {settings.teamName && <p className="text-[10px] font-medium text-gray-500">{settings.teamName}</p>}
+                {settings.programName && <p className="text-[8px] text-gray-400">{settings.programName}</p>}
                 <p className="mt-1 text-[8px] text-gray-400">{settings.coachName && `Coach: ${settings.coachName}`}</p>
               </div>
             </div>
 
-            {/* Watermark */}
+            {/* Status Badge */}
+            <div className="mb-4 rounded px-3 py-2 text-center text-[8px] font-bold uppercase tracking-wider text-white" style={{ backgroundColor: primary }}>
+              Player spot officially secured upon deposit confirmation
+            </div>
+
             <div className="flex items-center justify-center opacity-[0.03]">
               <span className="text-4xl font-black">DIAMOND</span>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
         <p className="mb-4 text-center text-xs font-bold uppercase tracking-widest text-slate-500">
           {players.length} player{players.length !== 1 ? "s" : ""} registered
         </p>
 
-        {/* Actions */}
         <div className="flex gap-3">
           <button onClick={handleDownload}
-            className="flex-1 rounded-md bg-red-700 py-4 font-black uppercase tracking-widest text-white shadow-lg shadow-red-900/20 transition-all hover:bg-red-600">
+            className="flex-1 rounded-md py-4 font-black uppercase tracking-widest text-white shadow-lg transition-all hover:opacity-90"
+            style={primaryGlow}>
             📥 Download PDF
           </button>
           <button onClick={onClose}

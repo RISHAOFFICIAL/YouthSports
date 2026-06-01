@@ -9,8 +9,22 @@ interface Props {
   onClose: () => void;
 }
 
+const PRESET_COLORS = [
+  { name: "Red", value: "#b91c1c" },
+  { name: "Blue", value: "#1d4ed8" },
+  { name: "Green", value: "#15803d" },
+  { name: "Purple", value: "#7e22ce" },
+  { name: "Orange", value: "#c2410c" },
+  { name: "Teal", value: "#0f766e" },
+];
+
 export default function CoachSettingsModal({ settings, onSave, onClose }: Props) {
-  const [form, setForm] = useState<CoachSettings>({ ...settings });
+  const [form, setForm] = useState<CoachSettings>({
+    ...settings,
+    programName: settings.programName || "",
+    programYear: settings.programYear || new Date().getFullYear().toString(),
+    primaryColor: settings.primaryColor || "#b91c1c",
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -33,7 +47,7 @@ export default function CoachSettingsModal({ settings, onSave, onClose }: Props)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-extrabold uppercase tracking-tight text-white">
             Coach Settings
@@ -71,10 +85,54 @@ export default function CoachSettingsModal({ settings, onSave, onClose }: Props)
               className="w-full rounded-md border border-slate-800 bg-slate-950 p-4 text-white transition-colors placeholder:text-slate-600 focus:border-red-700 focus:outline-none" />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Program Name</label>
+              <input name="programName" value={form.programName} onChange={handleChange} placeholder="e.g. Travel Baseball"
+                className="w-full rounded-md border border-slate-800 bg-slate-950 p-4 text-white transition-colors placeholder:text-slate-600 focus:border-red-700 focus:outline-none" />
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Year</label>
+              <input name="programYear" value={form.programYear} onChange={handleChange} placeholder="e.g. 2025"
+                className="w-full rounded-md border border-slate-800 bg-slate-950 p-4 text-white transition-colors placeholder:text-slate-600 focus:border-red-700 focus:outline-none" />
+            </div>
+          </div>
+
           <div>
             <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Team Name</label>
             <input name="teamName" value={form.teamName} onChange={handleChange} placeholder="e.g. 12U Travel"
               className="w-full rounded-md border border-slate-800 bg-slate-950 p-4 text-white transition-colors placeholder:text-slate-600 focus:border-red-700 focus:outline-none" />
+          </div>
+
+          {/* Primary Color Picker */}
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Primary Color</label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {PRESET_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, primaryColor: c.value }))}
+                  className={`h-8 w-8 rounded-full border-2 transition-all ${
+                    form.primaryColor === c.value ? "border-white scale-110" : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: c.value }}
+                  title={c.name}
+                />
+              ))}
+              <div className="relative h-8 w-8 overflow-hidden rounded-full border border-slate-600">
+                <input
+                  type="color"
+                  value={form.primaryColor}
+                  onChange={(e) => setForm((prev) => ({ ...prev, primaryColor: e.target.value }))}
+                  className="absolute -left-2 -top-2 h-12 w-12 cursor-pointer border-0 p-0"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 rounded-full border border-slate-600" style={{ backgroundColor: form.primaryColor }} />
+              <span className="text-xs text-slate-400">{form.primaryColor}</span>
+            </div>
           </div>
 
           {/* Coach Info */}
@@ -100,7 +158,8 @@ export default function CoachSettingsModal({ settings, onSave, onClose }: Props)
           {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button type="submit"
-              className="flex-1 rounded-md bg-red-700 py-4 font-black uppercase tracking-widest text-white shadow-lg shadow-red-900/20 transition-all hover:bg-red-600">
+              className="flex-1 rounded-md py-4 font-black uppercase tracking-widest text-white shadow-lg transition-all hover:opacity-90"
+              style={{ backgroundColor: form.primaryColor, boxShadow: `0 10px 15px -3px ${form.primaryColor}33` }}>
               Save
             </button>
             <button type="button" onClick={onClose}

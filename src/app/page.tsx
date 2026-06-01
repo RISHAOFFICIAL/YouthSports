@@ -12,7 +12,10 @@ const defaultCoachSettings: CoachSettingsType = {
   coachEmail: "",
   coachPhone: "",
   teamName: "",
+  programName: "",
+  programYear: "",
   logoDataUrl: "",
+  primaryColor: "#b91c1c",
 };
 
 export default function Home() {
@@ -21,6 +24,7 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
+  // Load settings from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("diamondforms-settings");
     if (saved) {
@@ -29,6 +33,14 @@ export default function Home() {
       } catch {}
     }
   }, []);
+
+  // Apply dynamic primary color as CSS variable
+  useEffect(() => {
+    document.documentElement.style.setProperty("--primary", settings.primaryColor);
+    document.documentElement.style.setProperty("--primary-hover", settings.primaryColor + "dd");
+    document.documentElement.style.setProperty("--primary-light", settings.primaryColor + "26");
+    document.documentElement.style.setProperty("--primary-glow", settings.primaryColor + "4d");
+  }, [settings.primaryColor]);
 
   const saveSettings = (s: CoachSettingsType) => {
     setSettings(s);
@@ -44,6 +56,11 @@ export default function Home() {
     setPlayers((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // Dynamic primary style helper
+  const primaryBg = { backgroundColor: settings.primaryColor };
+  const primaryBorder = { borderColor: settings.primaryColor };
+  const primaryGlow = { boxShadow: `0 10px 15px -3px ${settings.primaryColor}33`, backgroundColor: settings.primaryColor };
+
   return (
     <main className="mx-auto max-w-md px-4 pb-28">
       {/* Header — Diamond Logo + Menu */}
@@ -57,7 +74,6 @@ export default function Home() {
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          {/* Coach badge */}
           {settings.orgName && (
             <span className="hidden rounded-full bg-slate-800 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-400 sm:inline-block">
               {settings.orgName}
@@ -80,15 +96,22 @@ export default function Home() {
               <img src={settings.logoDataUrl} alt="Logo" className="h-12 w-12 rounded-lg border border-slate-700 object-contain" />
             )}
             <div>
-              <p className="text-lg font-extrabold uppercase tracking-tight text-amber-400">{settings.orgName}</p>
+              <p className="text-lg font-extrabold uppercase tracking-tight" style={{ color: settings.primaryColor }}>
+                {settings.orgName}
+              </p>
               {settings.teamName && <p className="text-sm font-medium text-slate-400">{settings.teamName}</p>}
-              <p className="mt-0.5 text-[11px] text-slate-500">{settings.coachName && `Coach ${settings.coachName}`}{settings.coachEmail && ` · ${settings.coachEmail}`}</p>
+              {settings.programName && (
+                <p className="text-xs text-slate-500">{settings.programName}{settings.programYear ? ` · ${settings.programYear}` : ""}</p>
+              )}
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                {settings.coachName && `Coach ${settings.coachName}`}{settings.coachEmail && ` · ${settings.coachEmail}`}
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Progress — if players exist */}
+      {/* Progress */}
       {players.length > 0 && (
         <div className="mb-6">
           <div className="mb-1 flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500">
@@ -96,7 +119,7 @@ export default function Home() {
             <span>{players.length} player{players.length !== 1 ? "s" : ""}</span>
           </div>
           <div className="h-1 w-full overflow-hidden rounded-full bg-slate-800">
-            <div className="h-full w-full bg-red-700" style={{ width: `${Math.min(players.length * 25, 100)}%` }}></div>
+            <div className="h-full transition-all" style={{ ...primaryBg, width: `${Math.min(players.length * 25, 100)}%` }}></div>
           </div>
         </div>
       )}
@@ -107,37 +130,29 @@ export default function Home() {
       {/* Player List */}
       {players.length > 0 && (
         <section className="mt-6">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">
-            Roster
-          </h2>
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Roster</h2>
           <ul className="space-y-2">
             {players.map((p, i) => (
-              <li
-                key={i}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl"
-              >
+              <li key={i}
+                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl">
                 <div>
-                  <p className="font-bold text-white">
-                    {p.firstName} {p.lastName}
-                  </p>
+                  <p className="font-bold text-white">{p.firstName} {p.lastName}</p>
                   <p className="text-xs font-medium text-slate-400">
                     {p.age} yrs · {p.position}{p.jerseyNumber && ` · #${p.jerseyNumber}`}
                   </p>
                 </div>
-                <button
-                  onClick={() => removePlayer(i)}
-                  className="rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-red-400 transition-colors hover:bg-red-900/30"
-                >
+                <button onClick={() => removePlayer(i)}
+                  className="rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors hover:bg-red-900/30"
+                  style={{ color: settings.primaryColor }}>
                   Remove
                 </button>
               </li>
             ))}
           </ul>
 
-          <button
-            onClick={() => setShowPreview(true)}
-            className="mt-4 w-full bg-red-700 py-4 font-black uppercase tracking-widest text-white shadow-lg shadow-red-900/20 transition-all hover:bg-red-600 rounded-md"
-          >
+          <button onClick={() => setShowPreview(true)}
+            className="mt-4 w-full py-4 font-black uppercase tracking-widest text-white shadow-lg transition-all hover:opacity-90 rounded-md"
+            style={primaryGlow}>
             📄 Generate Registration PDF
           </button>
         </section>
@@ -149,19 +164,13 @@ export default function Home() {
           <div className="mx-auto mb-4 flex h-20 w-20 rotate-45 items-center justify-center rounded-lg bg-amber-400/10">
             <div className="h-10 w-10 rounded-full bg-slate-950"></div>
           </div>
-          <p className="text-lg font-extrabold uppercase tracking-tight text-slate-300">
-            No Players Yet
-          </p>
-          <p className="mt-2 text-sm text-slate-500">
-            Add your first player above to generate a registration form.
-          </p>
-          <p className="mt-1 text-xs text-slate-600">
-            Use Settings to add your team logo and coach info.
-          </p>
+          <p className="text-lg font-extrabold uppercase tracking-tight text-slate-300">No Players Yet</p>
+          <p className="mt-2 text-sm text-slate-500">Add your first player above to generate a registration form.</p>
+          <p className="mt-1 text-xs text-slate-600">Use Settings to add your team logo and coach info.</p>
         </div>
       )}
 
-      {/* Sticky footer for mobile */}
+      {/* Sticky footer */}
       <footer className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/80 p-4 backdrop-blur-md">
         <div className="mx-auto max-w-md">
           <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-600">
@@ -172,19 +181,10 @@ export default function Home() {
 
       {/* Modals */}
       {showSettings && (
-        <CoachSettings
-          settings={settings}
-          onSave={saveSettings}
-          onClose={() => setShowSettings(false)}
-        />
+        <CoachSettings settings={settings} onSave={saveSettings} onClose={() => setShowSettings(false)} />
       )}
-
       {showPreview && (
-        <GeneratedPreview
-          players={players}
-          settings={settings}
-          onClose={() => setShowPreview(false)}
-        />
+        <GeneratedPreview players={players} settings={settings} onClose={() => setShowPreview(false)} />
       )}
     </main>
   );
