@@ -1,10 +1,12 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from "react";
 import RegistrationForm from "@/components/RegistrationForm";
 import CoachSettings from "@/components/CoachSettings";
 import GeneratedPreview from "@/components/GeneratedPreview";
+import Roster from "@/components/Roster";
 import { PlayerData, CoachSettings as CoachSettingsType } from "@/lib/types";
+import { Users, UserPlus, Settings } from 'lucide-react';
 
 const defaultCoachSettings: CoachSettingsType = {
   orgName: "",
@@ -18,15 +20,19 @@ const defaultCoachSettings: CoachSettingsType = {
 export default function Home() {
   const [settings, setSettings] = useState<CoachSettingsType>(defaultCoachSettings);
   const [players, setPlayers] = useState<PlayerData[]>([]);
+  const [view, setView] = useState<'register' | 'roster'>('register');
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerData | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("diamondforms-settings");
-    if (saved) {
-      try {
-        setSettings(JSON.parse(saved));
-      } catch {}
+    const savedSettings = localStorage.getItem("diamondforms-settings");
+    if (savedSettings) {
+      try { setSettings(JSON.parse(savedSettings)); } catch {}
+    }
+    const savedPlayers = localStorage.getItem("diamondforms-players");
+    if (savedPlayers) {
+      try { setPlayers(JSON.parse(savedPlayers)); } catch {}
     }
   }, []);
 
@@ -36,98 +42,96 @@ export default function Home() {
     setShowSettings(false);
   };
 
+  const persistPlayers = (newPlayers: PlayerData[]) => {
+    setPlayers(newPlayers);
+    localStorage.setItem("diamondforms-players", JSON.stringify(newPlayers));
+  };
+
   const addPlayer = (p: PlayerData) => {
-    setPlayers((prev) => [...prev, p]);
+    persistPlayers([...players, p]);
+    setView('roster');
+  };
+
+  const updatePlayer = (idx: number, updatedPlayer: PlayerData) => {
+    const newPlayers = [...players];
+    newPlayers[idx] = updatedPlayer;
+    persistPlayers(newPlayers);
   };
 
   const removePlayer = (idx: number) => {
-    setPlayers((prev) => prev.filter((_, i) => i !== idx));
+    persistPlayers(players.filter((_, i) => i !== idx));
+  };
+
+  const generateSinglePDF = (player: PlayerData) => {
+    setSelectedPlayer(player);
+    setShowPreview(true);
   };
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-6">
+    <main className="mx-auto max-w-lg min-h-screen bg-slate-950 text-slate-50 px-4 py-6 pb-32">
       {/* Header */}
-      <header className="mb-6 flex items-center justify-between">
+      <header className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">
-            ⚾ DiamondForms
+          <h1 className="text-2xl font-black tracking-tighter uppercase italic text-white flex items-center gap-2">
+            <span className="bg-amber-400 text-slate-950 px-2 rounded-sm rotate-3">D</span>
+            Diamond<span className="text-amber-400">Forms</span>
           </h1>
-          <p className="text-sm text-slate-400">Youth Sports Registration</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Elite Coach Toolkit</p>
         </div>
         <button
           onClick={() => setShowSettings(true)}
-          className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
+          className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-amber-400 hover:border-amber-400 transition-all"
         >
-          ⚙️ Settings
+          <Settings size={20} />
         </button>
       </header>
 
-      {/* Coach Info Banner */}
-      {settings.orgName && (
-        <div className="mb-4 rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-center">
-          <p className="text-lg font-bold text-amber-400">{settings.orgName}</p>
-          {settings.teamName && (
-            <p className="text-sm text-slate-300">{settings.teamName}</p>
-          )}
-          <p className="mt-1 text-xs text-slate-400">
-            {settings.coachName} · {settings.coachEmail}
-          </p>
-        </div>
-      )}
+      {/* Navigation Tabs */}
+      <div className="flex gap-2 mb-8 bg-slate-900/50 p-1 rounded-xl border border-slate-800">
+        <button 
+          onClick={() => setView('register')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+            view === 'register' ? 'bg-red-700 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          <UserPlus size={16} /> Register
+        </button>
+        <button 
+          onClick={() => setView('roster')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+            view === 'roster' ? 'bg-red-700 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          <Users size={16} /> Roster
+        </button>
+      </div>
 
-      {/* Registration Form */}
-      <RegistrationForm onSubmit={addPlayer} settings={settings} />
+      {/* Main Content */}
+      <div className="animate-in fade-in duration-500">
+        {view === 'register' ? (
+          <RegistrationForm onSubmit={addPlayer} settings={settings} />
+        ) : (
+          <Roster 
+            players={players} 
+            onUpdatePlayer={updatePlayer}
+            onRemovePlayer={removePlayer}
+            onGeneratePDF={generateSinglePDF}
+          />
+        )}
+      </div>
 
-      {/* Player List */}
-      {players.length > 0 && (
-        <section className="mt-6">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-slate-400">
-            Registered Players ({players.length})
-          </h2>
-          <ul className="space-y-2">
-            {players.map((p, i) => (
-              <li
-                key={i}
-                className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900/40 px-4 py-3"
-              >
-                <div>
-                  <p className="font-medium text-white">
-                    {p.firstName} {p.lastName}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {p.age} yrs · {p.jerseyNumber && `#${p.jerseyNumber} · `}
-                    {p.position}
-                  </p>
-                </div>
-                <button
-                  onClick={() => removePlayer(i)}
-                  className="rounded-md bg-red-900/40 px-2 py-1 text-xs text-red-300 transition hover:bg-red-800/60"
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-
+      {/* Sticky Bulk Action (only on Roster with players) */}
+      {view === 'roster' && players.length > 0 && (
+        <div className="fixed bottom-6 left-4 right-4 max-w-lg mx-auto">
           <button
-            onClick={() => setShowPreview(true)}
-            className="mt-4 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-3 font-bold text-white shadow-lg transition hover:from-amber-400 hover:to-orange-500"
+            onClick={() => {
+              setSelectedPlayer(null);
+              setShowPreview(true);
+            }}
+            className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-4 rounded-xl transition-all uppercase tracking-widest shadow-2xl shadow-amber-900/40 flex items-center justify-center gap-2"
           >
-            📄 Generate Registration PDF
+            Generate Full Roster PDF ({players.length})
           </button>
-        </section>
-      )}
-
-      {/* Empty State */}
-      {players.length === 0 && !showPreview && (
-        <div className="mt-12 text-center">
-          <div className="text-5xl">📋</div>
-          <p className="mt-4 text-slate-400">
-            Add players above to generate your registration form.
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Use Settings to add your organization logo and coach info.
-          </p>
         </div>
       )}
 
@@ -142,7 +146,7 @@ export default function Home() {
 
       {showPreview && (
         <GeneratedPreview
-          players={players}
+          players={selectedPlayer ? [selectedPlayer] : players}
           settings={settings}
           onClose={() => setShowPreview(false)}
         />
