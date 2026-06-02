@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import RegistrationForm from "@/components/RegistrationForm";
 import CoachSettings from "@/components/CoachSettings";
 import GeneratedPreview from "@/components/GeneratedPreview";
 import Roster from "@/components/Roster";
 import { PlayerData, CoachSettings as CoachSettingsType } from "@/lib/types";
-import { Users, UserPlus, Settings } from 'lucide-react';
+import { Users, Settings, Link as LinkIcon, Check } from 'lucide-react';
 
 const defaultCoachSettings: CoachSettingsType = {
   orgName: "",
@@ -23,12 +22,11 @@ const defaultCoachSettings: CoachSettingsType = {
 export default function Home() {
   const [settings, setSettings] = useState<CoachSettingsType>(defaultCoachSettings);
   const [players, setPlayers] = useState<PlayerData[]>([]);
-  const [view, setView] = useState<'register' | 'roster'>('register');
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerData | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
-  // Load settings from localStorage
   useEffect(() => {
     const savedSettings = localStorage.getItem("diamondforms-settings");
     if (savedSettings) {
@@ -40,7 +38,22 @@ export default function Home() {
     }
   }, []);
 
-  // Apply dynamic primary color as CSS variable
+  // Refresh players periodically to pick up new registrations
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const saved = localStorage.getItem("diamondforms-players");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (JSON.stringify(parsed) !== JSON.stringify(players)) {
+            setPlayers(parsed);
+          }
+        } catch {}
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [players]);
+
   useEffect(() => {
     document.documentElement.style.setProperty("--primary", settings.primaryColor);
     document.documentElement.style.setProperty("--primary-hover", settings.primaryColor + "dd");
@@ -59,11 +72,6 @@ export default function Home() {
     localStorage.setItem("diamondforms-players", JSON.stringify(newPlayers));
   };
 
-  const addPlayer = (p: PlayerData) => {
-    persistPlayers([...players, p]);
-    setView('roster');
-  };
-
   const updatePlayer = (idx: number, updatedPlayer: PlayerData) => {
     const newPlayers = [...players];
     newPlayers[idx] = updatedPlayer;
@@ -79,9 +87,26 @@ export default function Home() {
     setShowPreview(true);
   };
 
-  // Dynamic primary style helpers
+  const copyRegistrationLink = async () => {
+    const url = `${window.location.origin}/register`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch {
+      // Fallback
+      const input = document.createElement("input");
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    }
+  };
+
   const primaryGlow = { boxShadow: `0 10px 15px -3px ${settings.primaryColor}33`, backgroundColor: settings.primaryColor };
-  const tabActiveStyle = { backgroundColor: settings.primaryColor, color: 'white' };
 
   return (
     <main className="mx-auto max-w-lg min-h-screen bg-slate-950 text-slate-50 px-4 py-6 pb-32">
@@ -92,7 +117,7 @@ export default function Home() {
             <span className="bg-amber-400 text-slate-950 px-2 rounded-sm rotate-3">D</span>
             Diamond<span className="text-amber-400">Forms</span>
           </h1>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Elite Coach Toolkit</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Coach Dashboard</p>
         </div>
         <button
           onClick={() => setShowSettings(true)}
@@ -125,44 +150,57 @@ export default function Home() {
         </div>
       )}
 
-      {/* Navigation Tabs */}
-      <div className="flex gap-2 mb-8 bg-slate-900/50 p-1 rounded-xl border border-slate-800">
-        <button 
-          onClick={() => setView('register')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
-            view === 'register' ? 'shadow-lg' : 'text-slate-500 hover:text-slate-300'
-          }`}
-          style={view === 'register' ? tabActiveStyle : {}}
-        >
-          <UserPlus size={16} /> Register
-        </button>
-        <button 
-          onClick={() => setView('roster')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
-            view === 'roster' ? 'shadow-lg' : 'text-slate-500 hover:text-slate-300'
-          }`}
-          style={view === 'roster' ? tabActiveStyle : {}}
-        >
-          <Users size={16} /> Roster
-        </button>
+      {/* Share Registration Link */}
+      <div className="mb-8 rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Registration Link</p>
+            <p className="mt-1 text-sm text-slate-500">Share this link with parents</p>
+          </div>
+          <button
+            onClick={copyRegistrationLink}
+            className="flex items-center gap-2 rounded-lg px-4 py-3 text-xs font-black uppercase tracking-widest text-white transition-all hover:opacity-90"
+            style={primaryGlow}
+          >
+            {linkCopied ? <><Check size={16} /> Copied!</> : <><LinkIcon size={16} /> Copy Link</>}
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-slate-600 break-all">
+          {typeof window !== "undefined" ? `${window.location.origin}/register` : "/register"}
+        </p>
       </div>
 
-      {/* Main Content */}
-      <div className="animate-in fade-in duration-500">
-        {view === 'register' ? (
-          <RegistrationForm onSubmit={addPlayer} settings={settings} />
-        ) : (
-          <Roster 
-            players={players} 
-            onUpdatePlayer={updatePlayer}
-            onRemovePlayer={removePlayer}
-            onGeneratePDF={generateSinglePDF}
-          />
-        )}
+      {/* Section Title */}
+      <div className="mb-4 flex items-center gap-2">
+        <Users size={18} className="text-slate-400" />
+        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
+          Roster {players.length > 0 && <span className="text-amber-400">({players.length})</span>}
+        </h2>
       </div>
 
-      {/* Sticky Bulk Action (only on Roster with players) */}
-      {view === 'roster' && players.length > 0 && (
+      {/* Roster */}
+      <Roster
+        players={players}
+        onUpdatePlayer={updatePlayer}
+        onRemovePlayer={removePlayer}
+        onGeneratePDF={generateSinglePDF}
+      />
+
+      {/* Empty State */}
+      {players.length === 0 && (
+        <div className="mt-8 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-slate-900 border border-slate-800">
+            <Users size={28} className="text-slate-600" />
+          </div>
+          <p className="text-lg font-extrabold uppercase tracking-tight text-slate-400">No Players Yet</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Share the registration link above with parents to start building your roster.
+          </p>
+        </div>
+      )}
+
+      {/* Sticky Bulk Action */}
+      {players.length > 0 && (
         <div className="fixed bottom-6 left-4 right-4 max-w-lg mx-auto">
           <button
             onClick={() => {
@@ -178,8 +216,8 @@ export default function Home() {
 
       {/* Sticky footer */}
       <footer className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/80 p-4 backdrop-blur-md">
-        <div className="mx-auto max-w-md">
-          <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-600">DiamondForms · Free Tier</p>
+        <div className="mx-auto max-w-md text-center">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">DiamondForms · Coach Dashboard</p>
         </div>
       </footer>
 
