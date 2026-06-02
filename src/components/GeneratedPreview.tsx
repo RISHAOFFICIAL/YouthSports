@@ -12,51 +12,101 @@ interface Props {
 
 export default function GeneratedPreview({ players, settings, onClose }: Props) {
   const handleDownload = useCallback(() => {
-    generateRegistrationPDF(players, settings);
+    const filename = `registration_${settings.orgName?.replace(/\s+/g, "_") || "team"}_${Date.now()}.pdf`;
+    generateRegistrationPDF(players, settings, filename);
   }, [players, settings]);
+
+  const primary = settings.primaryColor || "#b91c1c";
+  const primaryGlow = { boxShadow: `0 10px 15px -3px ${primary}33`, backgroundColor: primary };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">Registration Summary</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">✕</button>
-        </div>
-
-        <div className="mb-4 rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-          {settings.logoDataUrl && (
-            <img src={settings.logoDataUrl} alt="Logo" className="mx-auto mb-3 h-16 w-16 rounded-lg object-contain" />
-          )}
-          <p className="text-center font-bold text-amber-400">{settings.orgName || "Your Organization"}</p>
-          {settings.teamName && <p className="text-center text-sm text-slate-300">{settings.teamName}</p>}
-        </div>
-
-        <div className="mb-4 max-h-60 space-y-2 overflow-y-auto">
-          {players.map((p, i) => (
-            <div key={i} className="rounded-lg border border-slate-700 bg-slate-800/30 px-3 py-2 text-sm">
-              <p className="font-medium text-white">{p.firstName} {p.lastName} {p.jerseyNumber && <span className="text-slate-400">#{p.jerseyNumber}</span>}</p>
-              <p className="text-xs text-slate-400">{p.age} yrs · {p.position}</p>
+      <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-amber-400">
+              <div className="h-3 w-3 rounded-full bg-white"></div>
             </div>
-          ))}
+            <span className="text-base font-black italic tracking-tighter uppercase">
+              Diamond<span className="text-amber-400">Forms</span>
+            </span>
+          </div>
+          <button onClick={onClose} className="text-slate-500 transition-colors hover:text-amber-400">✕</button>
         </div>
 
-        <p className="mb-4 text-center text-xs text-slate-500">
+        {/* Preview Card */}
+        <div className="mb-4 rounded-lg border border-slate-700 bg-white p-6 shadow-sm">
+          <div className="border-2 border-amber-400 p-4">
+            <div className="mb-6 flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <div className="flex h-4 w-4 rotate-45 items-center justify-center rounded-sm bg-amber-400">
+                    <div className="h-2 w-2 rounded-full bg-white"></div>
+                  </div>
+                  <span className="text-xs font-black italic tracking-tighter">DIAMOND<span className="text-amber-500">FORMS</span></span>
+                </div>
+                <p className="mt-1 text-[8px] font-bold uppercase tracking-widest text-gray-400">Registration Receipt</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-black uppercase leading-none" style={{ color: primary }}>Paid</p>
+                <p className="text-[8px] font-bold text-gray-400">#DF-{String(Date.now()).slice(-6)}</p>
+              </div>
+            </div>
+
+            <div className="mb-6 grid grid-cols-2 gap-6">
+              <div>
+                <p className="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-2 border-b pb-1">Player Roster</p>
+                <div className="space-y-2">
+                  {players.slice(0, 3).map((p, i) => (
+                    <div key={i} className="text-[10px]">
+                      <p className="font-bold text-gray-800">{p.firstName} {p.lastName}</p>
+                      <p className="text-[8px] text-gray-500">{p.age} yrs · {p.position}{p.jerseyNumber && ` · #${p.jerseyNumber}`}</p>
+                    </div>
+                  ))}
+                  {players.length > 3 && (
+                    <p className="text-[8px] font-bold" style={{ color: primary }}>+{players.length - 3} more players</p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <p className="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-2 border-b pb-1">Organization</p>
+                <p className="text-xs font-bold text-gray-800">{settings.orgName || "—"}</p>
+                {settings.teamName && <p className="text-[10px] font-medium text-gray-500">{settings.teamName}</p>}
+                {settings.programName && <p className="text-[8px] text-gray-400">{settings.programName}</p>}
+                <p className="mt-1 text-[8px] text-gray-400">{settings.coachName && `Coach: ${settings.coachName}`}</p>
+              </div>
+            </div>
+
+            {/* Status Badge */}
+            <div className="mb-4 rounded px-3 py-2 text-center text-[8px] font-bold uppercase tracking-wider text-white" style={{ backgroundColor: primary }}>
+              Player spot officially secured upon deposit confirmation
+            </div>
+
+            <div className="flex items-center justify-center opacity-[0.03]">
+              <span className="text-4xl font-black">DIAMOND</span>
+            </div>
+          </div>
+        </div>
+
+        <p className="mb-4 text-center text-xs font-bold uppercase tracking-widest text-slate-500">
           {players.length} player{players.length !== 1 ? "s" : ""} registered
         </p>
 
         <div className="flex gap-3">
           <button onClick={handleDownload}
-            className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-3 font-bold text-white shadow-lg transition hover:from-amber-400 hover:to-orange-500 active:scale-[0.98]">
+            className="flex-1 rounded-md py-4 font-black uppercase tracking-widest text-white shadow-lg transition-all hover:opacity-90"
+            style={primaryGlow}>
             📥 Download PDF
           </button>
           <button onClick={onClose}
-            className="rounded-xl bg-slate-800 px-5 py-3 font-medium text-slate-300 transition hover:bg-slate-700">
+            className="rounded-md border-2 border-slate-700 px-6 py-4 font-bold uppercase tracking-wider text-slate-400 transition-colors hover:border-amber-400 hover:text-amber-400">
             Close
           </button>
         </div>
 
-        <p className="mt-3 text-center text-[10px] text-slate-600">
-          DiamondForms · Free tier includes branding
+        <p className="mt-4 text-center text-[9px] font-bold uppercase tracking-widest text-slate-700">
+          DiamondForms · Free Tier Registration
         </p>
       </div>
     </div>

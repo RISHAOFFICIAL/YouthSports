@@ -10,13 +10,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#0f172a",
+  themeColor: "#020617",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="bg-slate-950 text-slate-100">
-      <body className="min-h-screen antialiased">{children}</body>
+    <html lang="en" className="bg-slate-950 text-slate-50">
+      <body className="min-h-screen antialiased font-sans">{children}</body>
     </html>
   );
 }

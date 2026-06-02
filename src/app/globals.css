@@ -11,6 +11,16 @@
   --color-amber-700: #b45309;
   --color-amber-800: #92400e;
   --color-amber-900: #78350f;
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-200: #fecaca;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-red-800: #991b1b;
+  --color-red-900: #7f1d1d;
   --color-slate-50: #f8fafc;
   --color-slate-100: #f1f5f9;
   --color-slate-200: #e2e8f0;
@@ -22,4 +32,10 @@
   --color-slate-800: #1e293b;
   --color-slate-900: #0f172a;
   --color-slate-950: #020617;
+
+  /* Dynamic primary color (default: red-700) */
+  --primary: #b91c1c;
+  --primary-hover: #dc2626;
+  --primary-light: rgba(185, 28, 28, 0.15);
+  --primary-glow: rgba(185, 28, 28, 0.3);
 }
